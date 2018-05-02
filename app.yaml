@@ -1,0 +1,23 @@
+runtime: go
+api_version: go1
+
+env_variables:
+  GDAX_KEY: '' # GDAP API key
+  GDAX_PASSPHRASE: '' # GDAP API passphrase
+  GDAX_SECRET: '' # GDAP API secret
+  CRYPTOM_API_KEY: '' # Cryptom API key for authentication
+  JWT_SIGN_KEY: '' # Cryptom API authentication JWT sign key
+
+handlers:
+- url: /
+  script: _go_app
+  login: required
+  auth_fail_action: unauthorized
+
+- url: /index\.html
+  script: _go_app
+  login: required
+  auth_fail_action: unauthorized
+
+- url: /.*
+  script: _go_app
