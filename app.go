@@ -1,6 +1,7 @@
 package main
 
 import (
+	"./integration"
 	"./web"
 	"./web/auth"
 
@@ -17,6 +18,8 @@ func main() {
 	http.HandleFunc("/api/performance/btc", auth.SecurityMiddleware(web.HandleAPIPerformanceBtc))
 	http.HandleFunc("/api/performance/bch", auth.SecurityMiddleware(web.HandleAPIPerformanceBch))
 	http.HandleFunc("/api/history", auth.SecurityMiddleware(web.HandleAPIAccountHistory))
+
+	integration.InitializeCurrencyRateUpdates()
 
 	appengine.Main()
 }
