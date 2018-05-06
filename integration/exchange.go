@@ -1,18 +1,17 @@
 package integration
 
-import (
-	"../api"
-	gdax "github.com/preichenberger/go-gdax"
-)
+import "../api"
 
+// Exchange is the representation of a digital currency exchange.
+// All exchanges integrated should implement the functions defined here.
 type Exchange interface {
 	GetBaseCurrency() string
 
-	GetAccountHistory(string) []gdax.LedgerEntry
+	GetAccountHistory(string) []api.LedgerEntry
 
 	GetPortfolio() api.Portfolio
 
-	GetCurrentStakePerformance(string, []gdax.LedgerEntry) api.LastTradePerformance
+	GetCurrentStakePerformance(string) api.LastTradePerformance
 
 	GetCurrentStakePerformanceSummary() []api.LastTradePerformance
 }

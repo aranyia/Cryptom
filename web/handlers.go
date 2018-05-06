@@ -31,7 +31,7 @@ func HandleAPIPerformance(respWriter http.ResponseWriter, request *http.Request)
 }
 
 func HandleAPIPerformanceBtc(respWriter http.ResponseWriter, request *http.Request) {
-	response := exchange.GetCurrentStakePerformance("BTC-EUR", exchange.GetAccountHistory("BTC"))
+	response := exchange.GetCurrentStakePerformance("BTC-EUR")
 
 	respBody, _ := json.Marshal(response)
 
@@ -40,7 +40,7 @@ func HandleAPIPerformanceBtc(respWriter http.ResponseWriter, request *http.Reque
 }
 
 func HandleAPIPerformanceBch(respWriter http.ResponseWriter, request *http.Request) {
-	response := exchange.GetCurrentStakePerformance("BCH-EUR", exchange.GetAccountHistory("BCH"))
+	response := exchange.GetCurrentStakePerformance("BCH-EUR")
 
 	respBody, _ := json.Marshal(response)
 

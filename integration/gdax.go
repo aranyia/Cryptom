@@ -18,6 +18,8 @@ func (exchange *GDAXExchange) GetBaseCurrency() string {
 	return exchange.BaseCurrency
 }
 
+const paginationLimitDefault = 50
+
 var client = initClient()
 
 func initClient() *gdax.Client {
@@ -102,36 +104,49 @@ func getFilledOrders() (buyOrders []gdax.Order, sellOrders []gdax.Order) {
 	return buyOrders, sellOrders
 }
 
-func (exchange *GDAXExchange) GetAccountHistory(accountUnit string) (accountLedgerEntries []gdax.LedgerEntry) {
+func (exchange *GDAXExchange) GetAccountHistory(accountUnit string) (accountLedgerEntries []api.LedgerEntry) {
+	var gdaxLedgerEntries []gdax.LedgerEntry
+
 	accounts, _ := client.GetAccounts()
 	for _, account := range accounts {
 		if account.Currency == accountUnit {
-			client.ListAccountLedger(account.Id, gdax.GetAccountLedgerParams{Pagination: gdax.PaginationParams{Limit: 50}}).NextPage(&accountLedgerEntries)
-			return accountLedgerEntries
+			client.ListAccountLedger(account.Id,
+				gdax.GetAccountLedgerParams{Pagination: gdax.PaginationParams{Limit: paginationLimitDefault}}).NextPage(&gdaxLedgerEntries)
 		}
 	}
-	return nil
+	for _, gdaxEntry := range gdaxLedgerEntries {
+		apiEntry := api.LedgerEntry{
+			CreatedAt: gdaxEntry.CreatedAt.Time(),
+			Amount:    gdaxEntry.Amount, Balance: gdaxEntry.Balance,
+			Type:      gdaxEntry.Type,
+			OrderID:   gdaxEntry.Details.OrderId,
+			ProductID: gdaxEntry.Details.ProductId}
+		accountLedgerEntries = append(accountLedgerEntries, apiEntry)
+	}
+	return accountLedgerEntries
 }
 
 func (exchange *GDAXExchange) GetCurrentStakePerformanceSummary() (performanceIndicators []api.LastTradePerformance) {
 	products := []string{"BTC-EUR", "BCH-EUR"}
 
 	for _, product := range products {
-		cryptoUnit := strings.Split(product, "-")[0]
-		performance := exchange.GetCurrentStakePerformance(product, exchange.GetAccountHistory(cryptoUnit))
+		performance := exchange.GetCurrentStakePerformance(product)
 		performanceIndicators = append(performanceIndicators, performance)
 	}
 	return performanceIndicators
 }
 
-func (exchange *GDAXExchange) GetCurrentStakePerformance(productId string, ledgerEntries []gdax.LedgerEntry) api.LastTradePerformance {
+func (exchange *GDAXExchange) GetCurrentStakePerformance(product string) api.LastTradePerformance {
+	cryptoUnit := strings.Split(product, "-")[0]
+	ledgerEntries := exchange.GetAccountHistory(cryptoUnit)
+
 	orderIDs := map[string]bool{}
 
 	for _, entry := range ledgerEntries {
 		if entry.Balance == 0 {
 			break
 		}
-		orderIDs[entry.Details.OrderId] = true
+		orderIDs[entry.OrderID] = true
 	}
 
 	var sumAmount float64
@@ -141,13 +156,13 @@ func (exchange *GDAXExchange) GetCurrentStakePerformance(productId string, ledge
 		sumAmount += order.FilledSize
 		sumPayed += order.ExecutedValue
 	}
-	ticker, _ := client.GetTicker(productId)
+	ticker, _ := client.GetTicker(product)
 
 	sumCurrentValue := ticker.Price * sumAmount
 	valueChange := sumCurrentValue - sumPayed
 	percentChange := valueChange / sumPayed * 100
 
-	productTypes := strings.Split(productId, "-")
+	productTypes := strings.Split(product, "-")
 
 	return api.LastTradePerformance{Unit: productTypes[0], Amount: sumAmount, Currency: productTypes[1],
 		ValuePayed:    sumPayed,

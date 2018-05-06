@@ -1,5 +1,7 @@
 package api
 
+import "time"
+
 type Portfolio struct {
 	Valuations []Valuation `json:"valuations,omitempty"`
 	Stakes     []Stake     `json:"stakes"`
@@ -25,6 +27,15 @@ type LastTradePerformance struct {
 	ValueCurrent  float64 `json:"valueCurrent"`
 	ValueChange   float64 `json:"valueChange"`
 	PercentChange float64 `json:"percentChange"`
+}
+
+type LedgerEntry struct {
+	CreatedAt time.Time `json:"createdAt,string"`
+	Amount    float64   `json:"amount,string"`
+	Balance   float64   `json:"balance,string"`
+	Type      string    `json:"type"`
+	OrderID   string    `json:"orderId"`
+	ProductID string    `json:"productId"`
 }
 
 type AuthenticationRequest struct {
