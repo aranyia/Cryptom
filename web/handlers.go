@@ -7,7 +7,6 @@ import (
 
 	"encoding/json"
 	"net/http"
-	"text/template"
 )
 
 var exchange integration.Exchange = &integration.GDAXExchange{BaseCurrency: "EUR", ValueCurrencies: []string{"EUR", "HUF", "AED"}}
@@ -57,17 +56,15 @@ func HandleAPIAccountHistory(respWriter http.ResponseWriter, request *http.Reque
 	respWriter.Write(respBody)
 }
 
-func HandlePageIndex(respWriter http.ResponseWriter, request *http.Request) {
-	templ := template.Must(template.ParseFiles("templates/index.html"))
-	templ.Execute(respWriter, exchange.GetPortfolio())
-}
-
 func HandlerAPIGetAuthToken(respWriter http.ResponseWriter, request *http.Request) {
 	var authRequest api.AuthenticationRequest
 
 	requestBody := make([]byte, request.ContentLength)
 	request.Body.Read(requestBody)
-	json.Unmarshal(requestBody, &authRequest)
+	if json.Unmarshal(requestBody, &authRequest) != nil || authRequest.ApiKey == "" {
+		http.Error(respWriter, "invalid request", http.StatusBadRequest)
+		return
+	}
 
 	if auth.IsAuthenticationValid(authRequest.ApiKey) {
 		tokenString, _ := auth.GenerateAuthToken()
@@ -77,6 +74,6 @@ func HandlerAPIGetAuthToken(respWriter http.ResponseWriter, request *http.Reques
 		respWriter.Header().Add("Content-Type", "application/json")
 		respWriter.Write(respBody)
 	} else {
-		http.Error(respWriter, "invalid API-key", http.StatusUnauthorized)
+		http.Error(respWriter, "invalid API key", http.StatusUnauthorized)
 	}
 }

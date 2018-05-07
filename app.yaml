@@ -11,13 +11,12 @@ env_variables:
 handlers:
 - url: /
   script: _go_app
-  login: required
-  auth_fail_action: unauthorized
 
 - url: /index\.html
   script: _go_app
-  login: required
-  auth_fail_action: unauthorized
+
+- url: /static
+  static_dir: static
 
 - url: /.*
   script: _go_app
