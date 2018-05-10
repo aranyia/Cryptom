@@ -19,14 +19,15 @@ type Valuation struct {
 	ValueUnit float64 `json:"valueUnit,omitempty"`
 }
 
-type LastTradePerformance struct {
-	Unit          string  `json:"unit"`
-	Amount        float64 `json:"amount,omitempty"`
-	Currency      string  `json:"currency"`
-	ValuePayed    float64 `json:"valuePayed"`
-	ValueCurrent  float64 `json:"valueCurrent"`
-	ValueChange   float64 `json:"valueChange"`
-	PercentChange float64 `json:"percentChange"`
+type ActiveTradePerformance struct {
+	StartedAt     time.Time `json:"startedAt,string"`
+	Unit          string    `json:"unit"`
+	Amount        float64   `json:"amount,omitempty"`
+	Currency      string    `json:"currency"`
+	ValuePaid     float64   `json:"valuePaid"`
+	ValueCurrent  float64   `json:"valueCurrent"`
+	ValueChange   float64   `json:"valueChange"`
+	PercentChange float64   `json:"percentChange"`
 }
 
 type LedgerEntry struct {

@@ -71,7 +71,8 @@ var LoggedIn = React.createClass({
   getInitialState: function() {
     return {
       portfolioValuations: [],
-      stakes: []
+      stakes: [],
+      performanceItems: []
     }
   },
   componentDidMount: function() {
@@ -81,6 +82,11 @@ var LoggedIn = React.createClass({
         stakes: result.stakes,
       });
     }.bind(this));
+    this.serverRequest = $.get('/api/performance', function (result) {
+      this.setState({
+        performanceItems: result,
+      });
+    }.bind(this));    
   },
 
   render: function() {
@@ -94,7 +100,19 @@ var LoggedIn = React.createClass({
           </div>
           <div className="row">
             {this.state.stakes.map(function(stake, i){
-              return <Stake key={i} stake={stake} />
+              return <Stake key={stake.unit} stake={stake} />
+            })}
+          </div>
+
+          <div className="row" style={{marginTop: '1.0rem', marginBottom: '0.5rem'}}>
+            <div className="col">
+              <h4 className="text-info">Performance</h4>
+              <p className="lead">Performance indicators of last active trades by digital currency</p>
+            </div>
+          </div>
+          <div className="row">
+            {this.state.performanceItems.map(function(performance, i){
+              return <PerformanceIndicator key={performance.unit} performance={performance} />
             })}
           </div>
         </div>
@@ -153,6 +171,41 @@ var Stake = React.createClass({
         </div>
       </div>);
     }
+});
+
+var PerformanceIndicator = React.createClass({
+  render: function() {
+    let performance = this.props.performance;
+    let indicatorColor = (performance.percentChange >= 0) ? 'green' : 'red';
+    let activeSinceLine;
+    if (performance.startedAt != null) {
+      let activeSince = new Date(performance.startedAt);
+      let days =  Math.floor((new Date() - activeSince) / (24 * 60 * 60 * 1000)); 
+      activeSinceLine = <span style={{fontSize: '0.8rem'}}>Active for <strong>{days} days</strong> since {activeSince.getFullYear() + "-" + (activeSince.getMonth()+1) + "-" + activeSince.getDate()}</span>
+    }
+
+    return(
+      <div className="col">
+        <div className="card">
+          <div className="card-body">
+            <h5 className="card-title text-info">{performance.unit}</h5>
+            <h6 className="card-subtitle mb-2 text-muted">{numeral(performance.amount).format('0,0.0000')}</h6>
+            <div className="card-text">
+              <div key={performance.unit + "-perf-percent"} style={{marginBottom: '0.8em'}}>
+                <span style={{fontSize: '1.3rem', color: indicatorColor}}><strong>{numeral(performance.percentChange).format('0.00')}%</strong></span>
+              </div>
+              <div key={performance.unit + "-perf-val-change"} style={{marginBottom: '0.8em'}}>
+                <span style={{fontSize: '1.3rem'}}><strong className="text-primary">{numeral(performance.valueChange).format('0.00 a')}</strong> <small>{performance.currency}</small></span>
+              </div>
+              <div key={performance.unit + "-perf-active-since"}>
+                {activeSinceLine}
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
 });
 
 ReactDOM.render(<App />, document.getElementById('app'));

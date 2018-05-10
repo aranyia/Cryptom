@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 	"strings"
+	"time"
 
 	"../api"
 	"github.com/preichenberger/go-gdax"
@@ -126,7 +127,7 @@ func (exchange *GDAXExchange) GetAccountHistory(accountUnit string) (accountLedg
 	return accountLedgerEntries
 }
 
-func (exchange *GDAXExchange) GetCurrentStakePerformanceSummary() (performanceIndicators []api.LastTradePerformance) {
+func (exchange *GDAXExchange) GetCurrentStakePerformanceSummary() (performanceIndicators []api.ActiveTradePerformance) {
 	products := []string{"BTC-EUR", "BCH-EUR"}
 
 	for _, product := range products {
@@ -136,36 +137,43 @@ func (exchange *GDAXExchange) GetCurrentStakePerformanceSummary() (performanceIn
 	return performanceIndicators
 }
 
-func (exchange *GDAXExchange) GetCurrentStakePerformance(product string) api.LastTradePerformance {
+func (exchange *GDAXExchange) GetCurrentStakePerformance(product string) api.ActiveTradePerformance {
 	cryptoUnit := strings.Split(product, "-")[0]
 	ledgerEntries := exchange.GetAccountHistory(cryptoUnit)
 
 	orderIDs := map[string]bool{}
+	stakeStartDate := time.Now()
 
 	for _, entry := range ledgerEntries {
 		if entry.Balance == 0 {
 			break
 		}
+		if stakeStartDate.After(entry.CreatedAt) {
+			stakeStartDate = entry.CreatedAt
+		}
 		orderIDs[entry.OrderID] = true
 	}
 
 	var sumAmount float64
-	var sumPayed float64
+	var sumPaid float64
 	for orderID := range orderIDs {
 		order, _ := client.GetOrder(orderID)
 		sumAmount += order.FilledSize
-		sumPayed += order.ExecutedValue
+		sumPaid += order.ExecutedValue
 	}
 	ticker, _ := client.GetTicker(product)
 
 	sumCurrentValue := ticker.Price * sumAmount
-	valueChange := sumCurrentValue - sumPayed
-	percentChange := valueChange / sumPayed * 100
+	valueChange := sumCurrentValue - sumPaid
+	percentChange := valueChange / sumPaid * 100
 
 	productTypes := strings.Split(product, "-")
 
-	return api.LastTradePerformance{Unit: productTypes[0], Amount: sumAmount, Currency: productTypes[1],
-		ValuePayed:    sumPayed,
+	return api.ActiveTradePerformance{StartedAt: stakeStartDate,
+		Unit:          productTypes[0],
+		Amount:        sumAmount,
+		Currency:      productTypes[1],
+		ValuePaid:     sumPaid,
 		ValueCurrent:  sumCurrentValue,
 		ValueChange:   valueChange,
 		PercentChange: percentChange}

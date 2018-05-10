@@ -11,7 +11,7 @@ type Exchange interface {
 
 	GetPortfolio() api.Portfolio
 
-	GetCurrentStakePerformance(string) api.LastTradePerformance
+	GetCurrentStakePerformance(string) api.ActiveTradePerformance
 
-	GetCurrentStakePerformanceSummary() []api.LastTradePerformance
+	GetCurrentStakePerformanceSummary() []api.ActiveTradePerformance
 }
